@@ -126,4 +126,5 @@ def api_summarize():
 
 
 if __name__ == "__main__":
+    # Use debug=True for local development only
     app.run(debug=True)
