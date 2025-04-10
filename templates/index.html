@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI-Powered Text Summarizer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-robot"></i> AI-Powered Text Summarizer</h1>
+            <p>Quickly generate concise summaries of long texts using AI</p>
+        </header>
+
+        <main>
+            <form action="/summarize" method="post" enctype="multipart/form-data">
+                <div class="input-section">
+                    <h2>Input Text</h2>
+                    
+                    <div class="text-input">
+                        <textarea name="text" id="text-input" placeholder="Paste your text here or upload a file...">{{ original_text if original_text else '' }}</textarea>
+                    </div>
+                    
+                    <div class="file-upload">
+                        <label for="file-input" class="file-label">
+                            <i class="fas fa-file-upload"></i> Upload Text File
+                            <input type="file" name="file" id="file-input" accept=".txt,.md,.html">
+                        </label>
+                        <span id="file-name"></span>
+                    </div>
+                    
+                    <div class="options">
+                        <div class="option-group">
+                            <label for="method">Summarization Method:</label>
+                            <select name="method" id="method">
+                                <option value="abstractive" {{ 'selected' if method == 'abstractive' else '' }}>Abstractive (AI-Generated)</option>
+                                <option value="extractive" {{ 'selected' if method == 'extractive' else '' }}>Extractive (Key Sentences)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="option-group extractive-options{% if method != 'extractive' %} hidden{% endif %}">
+                            <label for="ratio">Summary Ratio:</label>
+                            <input type="range" name="ratio" id="ratio" min="0.1" max="0.5" step="0.05" value="{{ ratio|default(0.3) }}">
+                            <span id="ratio-value">30%</span>
+                            <small class="input-help">Percentage of original sentences to include in the summary</small>
+                        </div>
+                        
+                        <div class="option-group abstractive-options{% if method == 'extractive' %} hidden{% endif %}">
+                            <label for="max-length">Max Length (approx. words):</label>
+                            <input type="number" name="max_length" id="max-length" min="50" max="1000" value="{{ max_length|default(150) }}">
+                            <small class="input-help">The AI will aim for this maximum but may generate fewer words</small>
+                            
+                            <label for="min-length">Min Length (approx. words):</label>
+                            <input type="number" name="min_length" id="min-length" min="10" max="900" value="{{ min_length|default(50) }}">
+                            <small class="input-help">The AI will try to generate at least this many words if possible</small>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="submit-btn" id="submit-btn">
+                        <i class="fas fa-magic"></i> Generate Summary
+                        <span class="loader hidden" id="loader"></span>
+                    </button>
+                </div>
+            </form>
+            
+            {% if error %}
+            <div class="error-message">
+                <i class="fas fa-exclamation-triangle"></i> {{ error }}
+            </div>
+            {% endif %}
+            
+            {% if summary %}
+            <div class="result-section">
+                <h2>Summary</h2>
+                
+                <div class="stats">
+                    <div class="stat">
+                        <span class="stat-label">Original:</span>
+                        <span class="stat-value">{{ original_length }} words</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Summary:</span>
+                        <span class="stat-value">{{ summary_length }} words</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Reduction:</span>
+                        <span class="stat-value">{{ reduction }}%</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Method:</span>
+                        <span class="stat-value">{{ method.capitalize() }}</span>
+                    </div>
+                </div>
+                
+                <div class="summary-text">
+                    <p>{{ summary }}</p>
+                </div>
+                
+                <div class="actions">
+                    <button id="copy-btn" class="action-btn">
+                        <i class="fas fa-copy"></i> Copy
+                    </button>
+                    <button id="download-btn" class="action-btn">
+                        <i class="fas fa-download"></i> Download
+                    </button>
+                </div>
+            </div>
+            {% endif %}
+        </main>
+        
+        <footer>
+            <div class="api-info">
+                <h3>API Usage</h3>
+                <pre><code>
+POST /api/summarize
+Content-Type: application/json
+
+{
+  "text": "Your long text here...",
+  "method": "abstractive", // or "extractive"
+  "max_length": 150,      // for abstractive
+  "min_length": 50,       // for abstractive
+  "ratio": 0.3            // for extractive
+}
+                </code></pre>
+            </div>
+            <p>&copy; 2025 AI-Powered Text Summarizer</p>
+        </footer>
+    </div>
+    
+    <script src="{{ url_for('static', filename='main.js') }}"></script>
+</body>
+</html>
